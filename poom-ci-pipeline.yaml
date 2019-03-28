@@ -1,0 +1,30 @@
+---
+stages:
+  - name: build image
+    exec:
+      - $NOTIFY --data-urlencode "status=2" --data-urlencode "current-stage=$STAGE"
+      - docker build -t codingmatters/maintenance-page:1.0.0 $SRC
+
+  - name: push image
+    exec:
+      - $NOTIFY --data-urlencode "status=2" --data-urlencode "current-stage=$STAGE"
+      - docker push codingmatters/maintenance-page:1.0.0
+
+
+onSuccess:
+  - name: notify-flexio
+    exec:
+      - $NOTIFY --data-urlencode "status=0" --data-urlencode "current-stage="
+
+onError:
+  - name: notify-flexio
+    exec:
+      - $NOTIFY --data-urlencode "status=1" --data-urlencode "current-stage="
+
+cleanup:
+  - name: clean image
+    exec:
+      - docker image rm codingmatters/maintenance-page:1.0.0
+
+env:
+  - NOTIFY: curl -G "https://my.flexio.io/channelApi/flexHttpInOut/59d3a0105d443519843d0496/5adf40aededdbb452368cfca" --data-urlencode "repository=$REPOSITORY" --data-urlencode "branch=$BRANCH" --data-urlencode "pipeline-id=$PIPELINE_ID"
